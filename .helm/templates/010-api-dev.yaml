@@ -1,0 +1,62 @@
+{{- if  (eq .Values.global.env "dev") }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+  labels:
+    app: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+spec:
+  replicas: 1
+  serviceName: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+  selector:
+      matchLabels:
+        app: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+        env:
+        - name: IS_DEV_ENV
+          value: "true"
+        - name: SECRET
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-common-config
+              key: secret
+{{ tuple "billing-proxy-api-dev" . | include "werf_container_image" | indent 8 }}
+        volumeMounts:
+        - mountPath: /workspace
+          name: workspace
+        - name: ssh-agent-sock
+          mountPath: /ssh-agent
+      volumes:
+      - name: workspace
+        hostPath:
+          path: /.volumes/billing-proxy-api-dev-workspace
+      - name: ssh-agent-sock
+        hostPath:
+          path: /ssh-agent
+          type: Socket
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}-service-api
+  labels:
+    app: {{ .Chart.Name }}-service-api
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+  ports:
+  - name: {{ .Chart.Name }}-api-{{ .Values.global.env }}
+    port: 80
+    protocol: TCP
+
+{{- else }}
+
+{{- end }}

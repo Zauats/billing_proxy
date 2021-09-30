@@ -1,0 +1,16 @@
+{{- if (eq .Values.global.env "dev") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-common-config
+data:
+  secret: "secret"
+{{- else }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-common-config
+data:
+  secret: "{{ .Values.secret }}"
+
+{{- end }}

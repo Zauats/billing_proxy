@@ -1,0 +1,31 @@
+{{- if (eq .env "dev") }}
+---
+image: billing-proxy-image-dev
+from: {{ .BaseImage }}
+docker:
+  WORKDIR: /workspace/
+  USER: root
+  EXPOSE: "80"
+  CMD: ["sleep", "infinity"]
+ansible:
+ install:
+ - name: "Install additional packages"
+   shell: apk add --no-cache vim mc bash openssh git
+ - name: setup bash
+   shell: |
+     echo 'alias ll="ls -la"' >> ~/.bashrc
+     echo 'export SSH_AUTH_SOCK=/ssh-agent' >> ~/.bashrc
+     curl https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash -o ~/.git-completion.bash
+     echo '[ -f ~/.git-completion.bash ] && source ~/.git-completion.bash' >> ~/.bashrc
+ - name: StrictHostKeyChecking no
+   shell: printf "Host github.com\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" >> /etc/ssh/ssh_config
+---
+image: billing-proxy-api-dev
+fromImage: billing-proxy-image-dev
+git:
+- add: /api/prepare-scripts/init-dev-env.sh
+  to: /init-dev-env.sh
+docker:
+  WORKDIR: /workspace/billing_proxy/api
+---
+{{- end }}

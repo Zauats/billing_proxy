@@ -1,0 +1,45 @@
+{{- if (eq .env "prod") }}
+---
+artifact: billing-proxy-api-builder
+from: {{ .BaseImage }}
+git:
+- add: /billing/
+  to: /workspace/billing_proxy/api
+  stageDependencies:
+    setup:
+    - "*/**"
+    install:
+    - "package.json"
+    - "package-lock.json"
+ansible:
+  install:
+  - name: "Install libs"
+    shell: |
+      cd /workspace/billing_proxy/api && npm i
+  setup:
+  - name: "Compile"
+    shell: |
+      cd /workspace/billing_proxy/api && npm run compile
+---
+image: billing-proxy-api-prod
+from: {{ .BaseImage }}
+import:
+- artifact: billing-proxy-api-builder
+  add: /workspace/billing_proxy/api/out
+  to: /workspace/billing_proxy/api/out
+  after: setup
+- artifact: billing-proxy-api-builder
+  add: /workspace/billing_proxy/api/package.json
+  to: /workspace/billing_proxy/api/package.json
+  after: setup
+- artifact: billing-proxy-api-builder
+  add: /workspace/billing_proxy/api/node_modules
+  to: /workspace/billing_proxy/api/node_modules
+  after: install
+docker:
+  WORKDIR: /workspace/billing_proxy/api
+  USER: root
+  EXPOSE: ["80"]
+  CMD: "cd /workspace/billing_proxy/api && npm start"
+---
+{{- end }}

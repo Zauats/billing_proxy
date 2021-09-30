@@ -1,0 +1,12 @@
+{{ $_ := set . "project" "billing-proxy" }}
+
+project: {{ .project }}
+configVersion: 1
+
+{{ $_ := set . "BaseImage" "node:15-alpine" }}
+{{ $_ := env "ENVNAME" | set . "env" }}
+---
+{{ range $path, $content := .Files.Glob ".werf-partial/*.yaml" }}
+{{ tpl $content $ }}
+{{ end }}
+
