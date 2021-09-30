@@ -20,5 +20,3 @@ spec:
             name:  {{ $.Chart.Name }}-service-api
             port:
               number:  80
-  {{- end }}
-
